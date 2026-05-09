@@ -87,10 +87,22 @@ namespace MDPythonPatternMaker
         private void UpdatePreview(ExtractionResult result)
         {
             CanvasVector.Children.Clear();
+
+            // パターンのベース（外枠）：制作フローに合わせて赤色で描画
             foreach (var points in result.OuterShapes)
-                DrawPolygon(points, Brushes.Yellow, new SolidColorBrush(Color.FromArgb(120, 255, 0, 0)));
+            {
+                DrawPolygon(points,
+                    Brushes.Red,
+                    new SolidColorBrush(Color.FromArgb(100, 255, 0, 0))); // 半透明の赤
+            }
+
+            // 内部パーツ（InternalShape）：ベースの赤色の上でも目立つよう黄色で描画
             foreach (var points in result.InternalShapes)
-                DrawPolygon(points, Brushes.White, new SolidColorBrush(Color.FromArgb(120, 0, 255, 0)));
+            {
+                DrawPolygon(points,
+                    Brushes.Yellow,
+                    new SolidColorBrush(Color.FromArgb(100, 255, 255, 0))); // 半透明の黄色
+            }
         }
 
         private void DrawPolygon(OpenCvSharp.Point[] points, Brush stroke, Brush fill)
