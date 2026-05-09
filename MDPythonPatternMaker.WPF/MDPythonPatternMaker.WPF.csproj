@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenCvSharp4.Windows" Version="4.13.0.20260302" />
+    <PackageReference Include="OpenCvSharp4.WpfExtensions" Version="4.13.0.20260427" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MDPythonPatternMaker.Core\MDPythonPatternMaker.Core.csproj" />
+  </ItemGroup>
+
+</Project>
