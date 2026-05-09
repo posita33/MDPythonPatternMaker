@@ -5,6 +5,8 @@ using System.Windows.Shapes;
 using Microsoft.Win32;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
+using MDPythonPatternMaker.Core.Config;
+using MDPythonPatternMaker.Core.IO;
 using MDPythonPatternMaker.Core;
 
 namespace MDPythonPatternMaker
@@ -17,6 +19,13 @@ namespace MDPythonPatternMaker
         public MainWindow()
         {
             InitializeComponent();
+
+            // 起動時にロードしてUIに反映
+            var config = ConfigManager.Load();
+            SldScale.Value = config.Scale;
+            SldEpsilon.Value = config.Epsilon;
+            SldMinArea.Value = config.MinArea;
+            SldRedThr.Value = config.RedThreshold;
         }
 
         private void BtnLoad_Click(object sender, RoutedEventArgs e)
@@ -43,16 +52,25 @@ namespace MDPythonPatternMaker
         {
             if (_sourceMat == null) return;
 
+            // 変換時に現在の設定を保存
+            var currentConfig = new AppConfig
+            {
+                Scale = SldScale.Value,
+                Epsilon = SldEpsilon.Value,
+                MinArea = SldMinArea.Value,
+                RedThreshold = (int)SldRedThr.Value
+            };
+            ConfigManager.Save(currentConfig);
+
+            // 変換ロジックの実行
             var result = _converter.ExtractByChannels(
                 _sourceMat,
-                SldEpsilon.Value,
-                SldMinArea.Value,
-                (int)SldRedThr.Value);
+                currentConfig.Epsilon,
+                currentConfig.MinArea,
+                currentConfig.RedThreshold);
 
             UpdatePreview(result);
-            TxtPython.Text = _converter.GeneratePythonScript(result, _sourceMat.Height, SldScale.Value);
-
-            // 変換されたらコピーを許可
+            TxtPython.Text = _converter.GeneratePythonScript(result, _sourceMat.Height, currentConfig.Scale);
             BtnCopy.IsEnabled = true;
         }
 

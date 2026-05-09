@@ -29,7 +29,7 @@
                 <TextBlock Text="📁 ファイル操作" FontWeight="Bold" Margin="0,0,0,10" FontSize="14"/>
                 <Button x:Name="BtnLoad" Content="画像読み込み" Height="40" Click="BtnLoad_Click" Margin="0,0,0,20"/>
 
-                <TextBlock Text="⚙ パラメータ設定" FontWeight="Bold" Margin="0,0,0,10" FontSize="14"/>
+                <TextBlock Text="🔄 パターン変換" FontWeight="Bold" Margin="0,0,0,10" FontSize="14"/>
 
                 <StackPanel Margin="0,0,0,15">
                     <DockPanel LastChildFill="False">
@@ -111,7 +111,7 @@
                     <Slider x:Name="SldRedThr" Minimum="50" Maximum="255" Value="200" TickFrequency="1" IsSnapToTickEnabled="True" Margin="0,5,0,0"/>
                 </StackPanel>
 
-                <Button x:Name="BtnConvert" Content="パターンに変換" Height="50" Click="BtnConvert_Click" 
+                <Button x:Name="BtnConvert" Content="変換" Height="50" Click="BtnConvert_Click" 
                         IsEnabled="False" Background="#FF007ACC" Foreground="White" FontWeight="Bold" Margin="0,0,0,10"/>
 
                 <TextBlock Text="⚡ Python" FontWeight="Bold" Margin="0,0,0,10" FontSize="14"/>
