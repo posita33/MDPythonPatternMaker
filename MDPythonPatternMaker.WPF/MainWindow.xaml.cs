@@ -1,13 +1,14 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Media;
-using System.Windows.Shapes;
+﻿using MDPythonPatternMaker.Core;
+using MDPythonPatternMaker.Core.Config;
+using MDPythonPatternMaker.Core.IO;
+using MDPythonPatternMaker.WPF.Properties;
 using Microsoft.Win32;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
-using MDPythonPatternMaker.Core.Config;
-using MDPythonPatternMaker.Core.IO;
-using MDPythonPatternMaker.Core;
+using System;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace MDPythonPatternMaker
 {
@@ -97,6 +98,21 @@ namespace MDPythonPatternMaker
                 Clipboard.SetText(TxtPython.Text);
                 MessageBox.Show("コードをコピーしました。");
             }
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // 最小化・最大化状態ではない場合のみ、現在のサイズと位置を記録
+            if (WindowState == WindowState.Normal)
+            {
+                Settings.Default.WindowLeft = Left;
+                Settings.Default.WindowTop = Top;
+                Settings.Default.WindowWidth = Width;
+                Settings.Default.WindowHeight = Height;
+            }
+
+            // 設定を永続化保存
+            Settings.Default.Save();
         }
 
         // --- リセット処理 ---
