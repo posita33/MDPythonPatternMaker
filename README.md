@@ -1,0 +1,2 @@
+# MDPythonPatternMaker
+MarvelouseDesignerのPattern作成Pythonを作成するツール
