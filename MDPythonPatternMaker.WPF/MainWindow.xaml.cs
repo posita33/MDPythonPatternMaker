@@ -1,14 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Microsoft.Win32;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
-using MDPythonPatternMaker.Core; // Coreプロジェクトの参照
+using MDPythonPatternMaker.Core;
 
-namespace MDPythonPatternMaker.WPF
+namespace MDPythonPatternMaker
 {
     public partial class MainWindow : System.Windows.Window
     {
@@ -26,7 +25,6 @@ namespace MDPythonPatternMaker.WPF
             if (openFile.ShowDialog() == true)
             {
                 _sourceMat?.Dispose();
-                // ★重要：Unchanged を指定してαチャンネル(透過)を保持する
                 _sourceMat = Cv2.ImRead(openFile.FileName, ImreadModes.Unchanged);
                 ImgSource.Source = _sourceMat.ToWriteableBitmap();
 
@@ -34,60 +32,43 @@ namespace MDPythonPatternMaker.WPF
                 CanvasVector.Height = _sourceMat.Height;
                 CanvasVector.Children.Clear();
                 TxtPython.Clear();
+
+                // 画像が読み込まれたら変換を許可
+                BtnConvert.IsEnabled = true;
+                BtnCopy.IsEnabled = false;
             }
         }
 
         private void BtnConvert_Click(object sender, RoutedEventArgs e)
         {
-            if (_sourceMat == null)
-            {
-                MessageBox.Show("先に画像を読み込んでください。");
-                return;
-            }
+            if (_sourceMat == null) return;
 
-            // 1. Coreロジック：チャンネル（色）分離による抽出を実行
-            // エラー箇所修正：ExtractPatternsWithHierarchy ではなく ExtractByChannels を呼ぶ
-            var result = _converter.ExtractByChannels(_sourceMat, 0.002);
+            var result = _converter.ExtractByChannels(
+                _sourceMat,
+                SldEpsilon.Value,
+                SldMinArea.Value,
+                (int)SldRedThr.Value);
 
-            // 2. プレビュー表示の更新
             UpdatePreview(result);
+            TxtPython.Text = _converter.GeneratePythonScript(result, _sourceMat.Height, SldScale.Value);
 
-            // 3. Pythonスクリプトの生成
-            TxtPython.Text = _converter.GeneratePythonScript(result, _sourceMat.Height);
+            // 変換されたらコピーを許可
+            BtnCopy.IsEnabled = true;
         }
 
-        // 修正：引数の型を List<PatternResult> から ExtractionResult に変更
         private void UpdatePreview(ExtractionResult result)
         {
             CanvasVector.Children.Clear();
-
-            // 赤チャンネル (外枠) の描画
             foreach (var points in result.OuterShapes)
-            {
                 DrawPolygon(points, Brushes.Yellow, new SolidColorBrush(Color.FromArgb(120, 255, 0, 0)));
-            }
-
-            // 緑・青チャンネル (内部図形) の描画
             foreach (var points in result.InternalShapes)
-            {
                 DrawPolygon(points, Brushes.White, new SolidColorBrush(Color.FromArgb(120, 0, 255, 0)));
-            }
         }
 
         private void DrawPolygon(OpenCvSharp.Point[] points, Brush stroke, Brush fill)
         {
-            var polygon = new Polygon
-            {
-                Stroke = stroke,
-                Fill = fill,
-                StrokeThickness = 2
-            };
-
-            foreach (var p in points)
-            {
-                polygon.Points.Add(new System.Windows.Point(p.X, p.Y));
-            }
-
+            var polygon = new Polygon { Stroke = stroke, StrokeThickness = 2, Fill = fill };
+            foreach (var p in points) polygon.Points.Add(new System.Windows.Point(p.X, p.Y));
             CanvasVector.Children.Add(polygon);
         }
 
@@ -96,14 +77,14 @@ namespace MDPythonPatternMaker.WPF
             if (!string.IsNullOrEmpty(TxtPython.Text))
             {
                 Clipboard.SetText(TxtPython.Text);
-                MessageBox.Show("Pythonコードをコピーしました。");
+                MessageBox.Show("コードをコピーしました。");
             }
         }
 
-        protected override void OnClosed(EventArgs e)
-        {
-            _sourceMat?.Dispose();
-            base.OnClosed(e);
-        }
+        // --- リセット処理 ---
+        private void BtnResetScale_Click(object sender, RoutedEventArgs e) => SldScale.Value = 1.0;
+        private void BtnResetEpsilon_Click(object sender, RoutedEventArgs e) => SldEpsilon.Value = 0.005;
+        private void BtnResetMinArea_Click(object sender, RoutedEventArgs e) => SldMinArea.Value = 30;
+        private void BtnResetRedThr_Click(object sender, RoutedEventArgs e) => SldRedThr.Value = 200;
     }
 }
