@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using OpenCvSharp;
 
-namespace MDPythonPatternMaker.Core
+namespace MDPythonPatternMaker.Core.Converters
 {
     public class ExtractionResult
     {
@@ -78,7 +78,7 @@ namespace MDPythonPatternMaker.Core
             Cv2.BitwiseAnd(redMask, shapeMask, redMask);
 
             // 形を整える ( Closing処理 )
-            using var kernel = Cv2.GetStructuringElement(MorphShapes.Rect, new OpenCvSharp.Size(3, 3));
+            using var kernel = Cv2.GetStructuringElement(MorphShapes.Rect, new Size(3, 3));
             Cv2.MorphologyEx(redMask, redMask, MorphTypes.Close, kernel);
 
             // 輪郭抽出 ( 外枠 )

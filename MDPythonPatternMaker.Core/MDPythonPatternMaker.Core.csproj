@@ -10,4 +10,8 @@
     <PackageReference Include="OpenCvSharp4.Windows" Version="4.13.0.20260302" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="NewFolder\" />
+  </ItemGroup>
+
 </Project>

@@ -8,10 +8,10 @@ using System.Reflection;
 using Microsoft.Win32;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
-using MDPythonPatternMaker.Core;
 using MDPythonPatternMaker.Core.Config;
 using MDPythonPatternMaker.Core.IO;
 using MDPythonPatternMaker.WPF.Properties;
+using MDPythonPatternMaker.Core.Converters;
 
 namespace MDPythonPatternMaker
 {
