@@ -75,7 +75,7 @@
                         <TextBox Text="{Binding ElementName=SldEpsilon, Path=Value, StringFormat={}{0:F3}, UpdateSourceTrigger=PropertyChanged}" 
                                  Width="45" DockPanel.Dock="Right" TextAlignment="Right"/>
                     </DockPanel>
-                    <Slider x:Name="SldEpsilon" Minimum="0.001" Maximum="0.050" Value="0.005" TickFrequency="0.001" IsSnapToTickEnabled="True" Margin="0,5,0,0"/>
+                    <Slider x:Name="SldEpsilon" Minimum="0.001" Maximum="0.05" Value="0.005" TickFrequency="0.001" IsSnapToTickEnabled="True" Margin="0,5,0,0"/>
                 </StackPanel>
 
                 <StackPanel Margin="0,0,0,15">
@@ -119,11 +119,20 @@
                 </StackPanel>
 
                 <Button x:Name="BtnConvert" Content="変換" Height="50" Click="BtnConvert_Click" 
-                        IsEnabled="False" Background="#FF007ACC" Foreground="White" FontWeight="Bold" Margin="0,0,0,10"/>
+                        IsEnabled="False" Background="#FF007ACC" Foreground="White" FontWeight="Bold" Margin="0,0,0,20"/>
 
                 <TextBlock Text="⚡ Python" FontWeight="Bold" Margin="0,0,0,10" FontSize="14"/>
 
-                <Button x:Name="BtnCopy" Content="コードをコピー" Height="35" Click="BtnCopy_Click" IsEnabled="False"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="BtnCopy" Content="📋 コピー" Height="35" Click="BtnCopy_Click" 
+                            IsEnabled="False" Margin="0,0,5,0"/>
+                    <Button x:Name="BtnSave" Content="💾 保存" Height="35" Click="BtnSave_Click" 
+                            IsEnabled="False" Grid.Column="1" Margin="5,0,0,0"/>
+                </Grid>
             </StackPanel>
         </Border>
 
@@ -140,7 +149,7 @@
                     <Image x:Name="ImgSource" Stretch="Uniform"/>
                 </Grid>
             </GroupBox>
-            <GroupBox Grid.Row="1" Margin="0,5,0,0">
+            <GroupBox Grid.Row="1" Margin="5,5,0,0">
                 <GroupBox.Header>
                     <TextBlock Text="📐 Vector Preview" FontWeight="Bold" FontSize="12"/>
                 </GroupBox.Header>
@@ -149,12 +158,14 @@
                 </Viewbox>
             </GroupBox>
         </Grid>
+
         <GroupBox Grid.Column="2" Margin="5,0,0,0">
             <GroupBox.Header>
                 <TextBlock Text="📋 Pythonコード" FontWeight="Bold" FontSize="12"/>
             </GroupBox.Header>
-            <TextBox x:Name="TxtPython" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
-                     FontFamily="Consolas" IsReadOnly="True" Background="#F8F8F8" Padding="10"/>
+            <TextBox x:Name="TxtPython" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" 
+                     HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" IsReadOnly="True" 
+                     Background="#F8F8F8" Padding="10"/>
         </GroupBox>
     </Grid>
 </Window>
