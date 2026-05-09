@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Reflection;
 using Microsoft.Win32;
 using OpenCvSharp;
 using OpenCvSharp.WpfExtensions;
@@ -16,20 +18,58 @@ namespace MDPythonPatternMaker
     public partial class MainWindow : System.Windows.Window
     {
         private Mat _sourceMat;
-        private string _loadedFileName = ""; // 読み込んだ画像名を保持
+        private string _loadedFileName = "";
         private readonly PatternConverter _converter = new PatternConverter();
 
         public MainWindow()
         {
             InitializeComponent();
 
-            // 前回終了時の設定を復元
+            // 設定の復元
             var config = ConfigManager.Load();
             SldScale.Value = config.Scale;
             SldEpsilon.Value = config.Epsilon;
             SldMinArea.Value = config.MinArea;
             SldRedThr.Value = config.RedThreshold;
         }
+
+        // --- Help メニューイベント ---
+
+        private void MenuDocument_Click(object sender, RoutedEventArgs e)
+        {
+            // GitHubのリポジトリ（README）を開く
+            var url = "https://github.com/posita33/MDPythonPatternMaker";
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = url,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"ドキュメントを開けませんでした: {ex.Message}");
+            }
+        }
+
+        private void MenuAbout_Click(object sender, RoutedEventArgs e)
+        {
+            // 実行中のアセンブリからバージョン情報を取得
+            var assembly = Assembly.GetExecutingAssembly();
+            var version = assembly.GetName().Version?.ToString(3) ?? "0.0.0";
+
+            string aboutText = "MDPythonPatternMaker\n" +
+                               $"Version: {version}\n\n" +
+                               "Licenses:\n" +
+                               "- OpenCvSharp (Apache License 2.0)\n" +
+                               "- Newtonsoft.Json (MIT License)\n" +
+                               "- WPF Toolkit (Microsoft Public License)";
+
+            MessageBox.Show(aboutText, "About This Tool", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        // --- ファイル操作・変換ロジック ---
 
         private void BtnLoad_Click(object sender, RoutedEventArgs e)
         {
@@ -40,7 +80,6 @@ namespace MDPythonPatternMaker
                 _sourceMat = Cv2.ImRead(openFile.FileName, ImreadModes.Unchanged);
                 ImgSource.Source = _sourceMat.ToWriteableBitmap();
 
-                // 拡張子なしのファイル名を保持
                 _loadedFileName = System.IO.Path.GetFileNameWithoutExtension(openFile.FileName);
 
                 CanvasVector.Width = _sourceMat.Width;
@@ -48,7 +87,6 @@ namespace MDPythonPatternMaker
                 CanvasVector.Children.Clear();
                 TxtPython.Clear();
 
-                // 画像が読み込まれたら「変換」を許可
                 BtnConvert.IsEnabled = true;
                 BtnCopy.IsEnabled = false;
                 BtnSave.IsEnabled = false;
@@ -59,7 +97,6 @@ namespace MDPythonPatternMaker
         {
             if (_sourceMat == null) return;
 
-            // パラメータ設定をconfig.jsonに保存
             var currentConfig = new AppConfig
             {
                 Scale = SldScale.Value,
@@ -69,7 +106,6 @@ namespace MDPythonPatternMaker
             };
             ConfigManager.Save(currentConfig);
 
-            // 変換ロジックの実行
             var result = _converter.ExtractByChannels(
                 _sourceMat,
                 currentConfig.Epsilon,
@@ -79,29 +115,30 @@ namespace MDPythonPatternMaker
             UpdatePreview(result);
             TxtPython.Text = _converter.GeneratePythonScript(result, _sourceMat.Height, currentConfig.Scale);
 
-            // 変換完了後にコピーと保存を有効化
             BtnCopy.IsEnabled = true;
             BtnSave.IsEnabled = true;
         }
+
+        // --- プレビュー表示（Issue #11 対応済み配色） ---
 
         private void UpdatePreview(ExtractionResult result)
         {
             CanvasVector.Children.Clear();
 
-            // パターンのベース（外枠）：制作フローに合わせて赤色で描画
+            // 外枠（パターンのベース）：赤色
             foreach (var points in result.OuterShapes)
             {
                 DrawPolygon(points,
                     Brushes.Red,
-                    new SolidColorBrush(Color.FromArgb(100, 255, 0, 0))); // 半透明の赤
+                    new SolidColorBrush(Color.FromArgb(100, 255, 0, 0)));
             }
 
-            // 内部パーツ（InternalShape）：ベースの赤色の上でも目立つよう黄色で描画
+            // 内部パーツ（InternalShape）：黄色
             foreach (var points in result.InternalShapes)
             {
                 DrawPolygon(points,
                     Brushes.Yellow,
-                    new SolidColorBrush(Color.FromArgb(100, 255, 255, 0))); // 半透明の黄色
+                    new SolidColorBrush(Color.FromArgb(100, 255, 255, 0)));
             }
         }
 
@@ -111,6 +148,8 @@ namespace MDPythonPatternMaker
             foreach (var p in points) polygon.Points.Add(new System.Windows.Point(p.X, p.Y));
             CanvasVector.Children.Add(polygon);
         }
+
+        // --- Python コード操作 ---
 
         private void BtnCopy_Click(object sender, RoutedEventArgs e)
         {
@@ -125,7 +164,6 @@ namespace MDPythonPatternMaker
         {
             if (string.IsNullOrEmpty(TxtPython.Text)) return;
 
-            // 画像名に基づいた初期ファイル名を生成
             string defaultName = string.IsNullOrEmpty(_loadedFileName)
                 ? "md_pattern"
                 : $"md_pattern_{_loadedFileName}";
@@ -151,9 +189,10 @@ namespace MDPythonPatternMaker
             }
         }
 
+        // --- ウィンドウ終了処理（Issue #7 対応済み） ---
+
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // ウィンドウの位置とサイズを記憶
             if (WindowState == WindowState.Normal)
             {
                 Settings.Default.WindowLeft = Left;
@@ -164,7 +203,7 @@ namespace MDPythonPatternMaker
             Settings.Default.Save();
         }
 
-        // --- リセット処理 ---
+        // --- スライダーリセット ---
         private void BtnResetScale_Click(object sender, RoutedEventArgs e) => SldScale.Value = 1.0;
         private void BtnResetEpsilon_Click(object sender, RoutedEventArgs e) => SldEpsilon.Value = 0.005;
         private void BtnResetMinArea_Click(object sender, RoutedEventArgs e) => SldMinArea.Value = 30;
