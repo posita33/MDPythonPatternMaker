@@ -131,15 +131,25 @@ namespace MDPythonPatternMaker.Core.Converters
 
             for (int i = 0; i < result.OuterShapes.Count; i++)
             {
+                var outerPoints = result.OuterShapes[i];
                 string oVar = $"outer_{i}";
-                AppendPoints(sb, result.OuterShapes[i], oVar, imageHeight, scale);
+                AppendPoints(sb, outerPoints, oVar, imageHeight, scale);
                 sb.AppendLine($"pid_{i} = pattern_api.CreatePatternWithPoints({oVar})");
 
                 for (int j = 0; j < result.InternalShapes.Count; j++)
                 {
-                    string iVar = $"inner_{i}_{j}";
-                    AppendPoints(sb, result.InternalShapes[j], iVar, imageHeight, scale);
-                    sb.AppendLine($"pattern_api.CreateInternalShapeWithPoints(pid_{i}, {iVar}, True)");
+                    var innerPoints = result.InternalShapes[j];
+
+                    // 【修正ポイント】内部図形の最初の1点が、現在の外枠(outerPoints)の中に含まれているか判定
+                    // 判定には PointPolygonTest を使用 (正の値なら内部)
+                    double measure = Cv2.PointPolygonTest(outerPoints, innerPoints[0], false);
+
+                    if (measure >= 0)
+                    {
+                        string iVar = $"inner_{i}_{j}";
+                        AppendPoints(sb, innerPoints, iVar, imageHeight, scale);
+                        sb.AppendLine($"pattern_api.CreateInternalShapeWithPoints(pid_{i}, {iVar}, True)");
+                    }
                 }
             }
             return sb.ToString();
