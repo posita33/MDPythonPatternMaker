@@ -70,26 +70,80 @@ namespace MDPythonPatternMaker
         }
 
         // --- ファイル操作・変換ロジック ---
+        // ドラッグ中のマウスカーソルの制御
+        private void Window_PreviewDragOver(object sender, DragEventArgs e)
+        {
+            // ファイル形式であればコピー（受け入れ可能）のカーソルにする
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effects = DragDropEffects.Copy;
+                e.Handled = true;
+            }
+        }
+
+        // ファイルがドロップされた時の処理
+        private void Window_Drop(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                // ドロップされたファイルパスを取得（複数選択でも最初の1つを取得）
+                string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+                if (files != null && files.Length > 0)
+                {
+                    string filePath = files[0];
+                    LoadImageFromFile(filePath); // 共通の読み込みメソッドを呼び出す
+                }
+            }
+        }
+
+        /// <summary>
+        /// 指定されたパスから画像を読み込み、UIと内部データを更新します。
+        /// </summary>
+        /// <param name="filePath">読み込む画像のフルパス</param>
+        private void LoadImageFromFile(string filePath)
+        {
+            try
+            {
+                // 1. ドラッグ＆ドロップ案内テキストを非表示にする
+                TxtDragDropGuide.Visibility = Visibility.Collapsed;
+
+                // 2. 前回のMatリソースを解放し、新しい画像を読み込む 
+                _sourceMat?.Dispose();
+                _sourceMat = Cv2.ImRead(filePath, ImreadModes.Unchanged);
+        
+                // 3. UI（Original Image）に画像を表示 
+                ImgSource.Source = _sourceMat.ToWriteableBitmap();
+
+                // 4. 保存時のデフォルト名に使用するため、ファイル名（拡張子なし）を保持 
+                _loadedFileName = System.IO.Path.GetFileNameWithoutExtension(filePath);
+
+                // 5. プレビュー用キャンバスのサイズを画像に合わせる 
+                CanvasVector.Width = _sourceMat.Width;
+                CanvasVector.Height = _sourceMat.Height;
+
+                // 6. 以前の変換結果（プレビュー・コード）をクリア 
+                CanvasVector.Children.Clear();
+                TxtPython.Clear();
+
+                // 7. ボタンの有効状態を更新
+                BtnConvert.IsEnabled = true;  // 変換可能にする
+                BtnCopy.IsEnabled = false;    // 新しい画像なのでコピーは一旦無効
+                BtnSave.IsEnabled = false;    // 同様に保存も一旦無効
+            }
+            catch (Exception ex)
+            {
+                // 失敗した場合は案内を再表示し、エラーを通知
+                TxtDragDropGuide.Visibility = Visibility.Visible;
+                MessageBox.Show($"画像の読み込みに失敗しました: {ex.Message}");
+            }
+        }
 
         private void BtnLoad_Click(object sender, RoutedEventArgs e)
         {
             var openFile = new OpenFileDialog { Filter = "Image Files|*.png;*.jpg;*.jpeg;*.bmp" };
             if (openFile.ShowDialog() == true)
             {
-                _sourceMat?.Dispose();
-                _sourceMat = Cv2.ImRead(openFile.FileName, ImreadModes.Unchanged);
-                ImgSource.Source = _sourceMat.ToWriteableBitmap();
-
-                _loadedFileName = System.IO.Path.GetFileNameWithoutExtension(openFile.FileName);
-
-                CanvasVector.Width = _sourceMat.Width;
-                CanvasVector.Height = _sourceMat.Height;
-                CanvasVector.Children.Clear();
-                TxtPython.Clear();
-
-                BtnConvert.IsEnabled = true;
-                BtnCopy.IsEnabled = false;
-                BtnSave.IsEnabled = false;
+                LoadImageFromFile(openFile.FileName);
             }
         }
 
