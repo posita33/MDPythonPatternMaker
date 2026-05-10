@@ -8,7 +8,10 @@
         Left="{Binding Source={x:Static prop:Settings.Default}, Path=WindowLeft, Mode=TwoWay}"
         Top="{Binding Source={x:Static prop:Settings.Default}, Path=WindowTop, Mode=TwoWay}"
         Closing="Window_Closing"
-        Background="#F0F0F0">
+        Background="#F0F0F0"
+        AllowDrop="True"
+        PreviewDragOver="Window_PreviewDragOver"
+        Drop="Window_Drop">
 
     <Window.Resources>
         <Style x:Key="ResetButtonStyle" TargetType="Button">
@@ -168,6 +171,13 @@
                         <TextBlock Text="🖼 Original Image" FontWeight="Bold" FontSize="12"/>
                     </GroupBox.Header>
                     <Grid Background="#F8F8F8">
+                        <TextBlock x:Name="TxtDragDropGuide" 
+                                   Text="ここに画像をドラッグ＆ドロップ" 
+                                   VerticalAlignment="Center" 
+                                   HorizontalAlignment="Center" 
+                                   Foreground="#FFAAAAAA" 
+                                   FontSize="18"
+                                   IsHitTestVisible="False"/>
                         <Image x:Name="ImgSource" Stretch="Uniform"/>
                     </Grid>
                 </GroupBox>
